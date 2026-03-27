@@ -2439,7 +2439,7 @@ function buildWaiterMesas(floor){
   } else {
     // Mapa posicionado cuando filtra por piso — igual que admin
     g.style.cssText='position:relative;background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);overflow:auto;margin-bottom:16px';
-    const maxX=Math.max(...floorFilter.map(t=>t.gridX||0),3)+1;
+    const maxX=Math.max(...floorFilter.map(t=>(t.gridX||0)+(t.shape==='double'||t.juntadaCon?1:0)),3)+1;
     const maxY=Math.max(...floorFilter.map(t=>t.gridY||0),2)+1;
     g.style.minHeight=(maxY*(CELL+20)+PAD*2)+'px';
     g.style.minWidth=(maxX*(CELL+20)+PAD*2)+'px';
@@ -3969,8 +3969,8 @@ function filterFloorA(f,el){
 function buildAdminMesas(){
   const canvas=document.getElementById('floor-canvas');if(!canvas)return;
   const floor=TABLES.filter(t=>t.floor===aFloor);
-  // Calculate canvas size
-  const maxX=Math.max(...floor.map(t=>t.gridX||0),4)+1;
+  // Calculate canvas size — mesas dobles ocupan 2 columnas
+  const maxX=Math.max(...floor.map(t=>(t.gridX||0)+(t.shape==='double'||t.juntadaCon?1:0)),4)+1;
   const maxY=Math.max(...floor.map(t=>t.gridY||0),3)+1;
   const W=(maxX*(CELL+20))+PAD*2;
   const H=(maxY*(CELL+20))+PAD*2;
@@ -4565,9 +4565,15 @@ function createNewTable(){
   const num=document.getElementById('nt-num').value.trim();if(!num){showToast('Escribe un nombre','err');return}
   const n=parseInt(document.getElementById('nt-chairs').value)||4;
   const chairs=Array.from({length:n},((_,i)=>({id:i+1,label:String(i+1)})));
+  const shape=document.getElementById('nt-shape').value;
+  const floor=document.getElementById('nt-floor').value;
   const maxId=Math.max(...TABLES.map(t=>t.id),0)+1;
-  const maxX=Math.max(...TABLES.filter(t=>t.floor===document.getElementById('nt-floor').value).map(t=>t.gridX||0),0);
-  const newT={id:maxId,num,floor:document.getElementById('nt-floor').value,shape:document.getElementById('nt-shape').value,cap:n,chairs,status:'libre',waiter:'',order:[],gridX:maxX+1,gridY:0,orientation:globalOrientation};
+  // Para mesas dobles, posicionar en gridX:0 de una nueva fila para evitar recorte
+  const floorTables=TABLES.filter(t=>t.floor===floor);
+  const maxY=Math.max(...floorTables.map(t=>t.gridY||0),0);
+  const newGridX=shape==='double'?0:Math.max(...floorTables.map(t=>t.gridX||0),0)+1;
+  const newGridY=shape==='double'?maxY+1:0;
+  const newT={id:maxId,num,floor,shape,cap:n,chairs,status:'libre',waiter:'',order:[],gridX:newGridX,gridY:newGridY,orientation:globalOrientation};
   TABLES.push(newT);
   document.getElementById('add-table-ov').classList.remove('show');
   saveTable(newT);
