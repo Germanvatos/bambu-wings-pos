@@ -4035,13 +4035,13 @@ function buildAdminMesas(){
 
     } else {
       // ── SINGLE TABLE ──
-      var tW2=t.shape==='double'?220:110;
+      var tW2=elW; // usar el ancho real del elemento
       var tCX2=tW2/2;
       var editBadge='';
       if(floorEditMode){
         editBadge='<div style="position:absolute;bottom:3px;left:50%;transform:translateX(-50%);background:rgba(201,168,80,.9);color:#111;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;pointer-events:none;white-space:nowrap">&#9999; toca para editar</div>';
       }
-      el.innerHTML='<svg width="100%" height="100%" viewBox="0 0 '+tW2+' 110"><g transform="rotate('+tRot+','+tCX2+',55)">'+renderTableSVG(t)+'</g></svg>'+editBadge;
+      el.innerHTML='<svg width="100%" height="100%" viewBox="0 0 '+tW2+' '+CELL+'"><g transform="rotate('+tRot+','+tCX2+','+(CELL/2)+')">'+renderTableSVG(t)+'</g></svg>'+editBadge;
     }
 
     // ── DRAG & DROP (edit mode) ──
@@ -4396,35 +4396,36 @@ function _drawCfgEditor(){
   const svg=document.getElementById('table-preview-svg');
   if(!svg) return;
 
+  // Para mesa doble usamos viewBox más ancho
+  const isDouble=(shape==='double');
+  const VW=isDouble?380:CFG_VW;
+  const CX=VW/2;
+  svg.setAttribute('viewBox','0 0 '+VW+' '+CFG_VH);
+
   // Asegurar posiciones en sillas sin pos
   editingChairs.forEach(function(c,i){
     if(!c.pos){
-      const isDouble=(shape==='double');
-      const RX=isDouble?80:55, RY=50;
+      const RX=isDouble?100:55, RY=50;
       const angle=(2*Math.PI*i/editingChairs.length)-(Math.PI/2);
-      c.pos={x: CFG_CX + RX*Math.cos(angle), y: CFG_CY + RY*Math.sin(angle)};
+      c.pos={x: CX + RX*Math.cos(angle), y: CFG_CY + RY*Math.sin(angle)};
     }
   });
 
   // Dibujar mesa
-  const mockTable={shape,chairs:editingChairs,rotation,orientation:'up',
-    num:document.getElementById('tcfg-num')?.value||'?',status:'libre',order:[]};
-  const tableW=shape==='double'?160:80, tableH=70;
-  let tableX=CFG_CX-(tableW/2), tableY=CFG_CY-(tableH/2);
-
-  let html='<g transform="rotate('+rotation+','+CFG_CX+','+CFG_CY+')">';
+  let html='<g transform="rotate('+rotation+','+CX+','+CFG_CY+')">';
   if(shape==='round'){
-    html+='<ellipse cx="'+CFG_CX+'" cy="'+CFG_CY+'" rx="55" ry="45" fill="#2a3a20" stroke="#3db870" stroke-width="2"/>';
-    html+='<text x="'+CFG_CX+'" y="'+(CFG_CY+5)+'" text-anchor="middle" fill="#c9a850" font-size="16" font-weight="bold" font-family="Georgia,serif">'+(document.getElementById('tcfg-num')?.value||'?')+'</text>';
-  } else if(shape==='double'){
-    const hw=(tableW/2)-4;
-    html+='<rect x="'+(CFG_CX-tableW/2)+'" y="'+(CFG_CY-tableH/2)+'" width="'+hw+'" height="'+tableH+'" rx="8" fill="#2a3a20" stroke="#3db870" stroke-width="2"/>';
-    html+='<rect x="'+(CFG_CX+4)+'" y="'+(CFG_CY-tableH/2)+'" width="'+hw+'" height="'+tableH+'" rx="8" fill="#2a3a20" stroke="#3db870" stroke-width="2" stroke-dasharray="5,3"/>';
-    html+='<text x="'+(CFG_CX-tableW/4)+'" y="'+(CFG_CY+5)+'" text-anchor="middle" fill="#c9a850" font-size="13" font-weight="bold" font-family="Georgia,serif">'+(document.getElementById('tcfg-num')?.value||'?')+'</text>';
-    html+='<text x="'+(CFG_CX+tableW/4)+'" y="'+(CFG_CY+5)+'" text-anchor="middle" fill="#c9a8508a" font-size="11" font-family="Georgia,serif">+</text>';
+    html+='<ellipse cx="'+CX+'" cy="'+CFG_CY+'" rx="55" ry="45" fill="#2a3a20" stroke="#3db870" stroke-width="2"/>';
+    html+='<text x="'+CX+'" y="'+(CFG_CY+5)+'" text-anchor="middle" fill="#c9a850" font-size="16" font-weight="bold" font-family="Georgia,serif">'+(document.getElementById('tcfg-num')?.value||'?')+'</text>';
+  } else if(isDouble){
+    const hw=80, tableH=70, gap=10;
+    const x1=CX-hw-gap/2, x2=CX+gap/2;
+    html+='<rect x="'+x1+'" y="'+(CFG_CY-tableH/2)+'" width="'+hw+'" height="'+tableH+'" rx="8" fill="#2a3a20" stroke="#3db870" stroke-width="2"/>';
+    html+='<rect x="'+x2+'" y="'+(CFG_CY-tableH/2)+'" width="'+hw+'" height="'+tableH+'" rx="8" fill="#2a3a20" stroke="#3db870" stroke-width="2" stroke-dasharray="5,3"/>';
+    html+='<text x="'+(x1+hw/2)+'" y="'+(CFG_CY+5)+'" text-anchor="middle" fill="#c9a850" font-size="13" font-weight="bold" font-family="Georgia,serif">'+(document.getElementById('tcfg-num')?.value||'?')+'</text>';
+    html+='<text x="'+(x2+hw/2)+'" y="'+(CFG_CY+5)+'" text-anchor="middle" fill="#c9a8508a" font-size="11" font-family="Georgia,serif">+</text>';
   } else {
-    html+='<rect x="'+tableX+'" y="'+tableY+'" width="'+tableW+'" height="'+tableH+'" rx="8" fill="#2a3a20" stroke="#3db870" stroke-width="2"/>';
-    html+='<text x="'+CFG_CX+'" y="'+(CFG_CY+5)+'" text-anchor="middle" fill="#c9a850" font-size="16" font-weight="bold" font-family="Georgia,serif">'+(document.getElementById('tcfg-num')?.value||'?')+'</text>';
+    html+='<rect x="'+(CX-40)+'" y="'+(CFG_CY-35)+'" width="80" height="70" rx="8" fill="#2a3a20" stroke="#3db870" stroke-width="2"/>';
+    html+='<text x="'+CX+'" y="'+(CFG_CY+5)+'" text-anchor="middle" fill="#c9a850" font-size="16" font-weight="bold" font-family="Georgia,serif">'+(document.getElementById('tcfg-num')?.value||'?')+'</text>';
   }
   html+='</g>';
 
@@ -4450,7 +4451,8 @@ function _drawCfgEditor(){
 function _cfgSvgPt(e){
   const svg=document.getElementById('table-preview-svg');
   const rect=svg.getBoundingClientRect();
-  const vw=CFG_VW, vh=CFG_VH;
+  const shape=document.getElementById('tcfg-shape')?.value||'square';
+  const vw=(shape==='double')?380:CFG_VW, vh=CFG_VH;
   const scaleX=vw/rect.width, scaleY=vh/rect.height;
   const clientX=e.touches?e.touches[0].clientX:e.clientX;
   const clientY=e.touches?e.touches[0].clientY:e.clientY;
@@ -4495,9 +4497,10 @@ function addChairEditor(){
   const n=editingChairs.length;
   const shape=document.getElementById('tcfg-shape')?.value||'square';
   const isDouble=(shape==='double');
-  const RX=isDouble?80:55, RY=50;
+  const CX=isDouble?190:CFG_CX;
+  const RX=isDouble?100:55, RY=50;
   const angle=(2*Math.PI*n/(n+1))-(Math.PI/2);
-  editingChairs.push({id:n+1, label:String(n+1), pos:{x:CFG_CX+RX*Math.cos(angle), y:CFG_CY+RY*Math.sin(angle)}});
+  editingChairs.push({id:n+1, label:String(n+1), pos:{x:CX+RX*Math.cos(angle), y:CFG_CY+RY*Math.sin(angle)}});
   _drawCfgEditor();
 }
 function removeChairEditor(){
