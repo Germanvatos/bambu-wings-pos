@@ -2453,7 +2453,7 @@ function buildWaiterMesas(floor){
       const myOccupied=isOcc&&t.waiter===CU.name;
       const canClick=isMine&&(isFree||myOccupied||isRes);
       const hasPago=t.pendingPago&&isOcc;
-      const isDouble=t.juntadaCon&&(Array.isArray(t.juntadaCon)?t.juntadaCon.length>0:!!t.juntadaCon);
+      const isDouble=(t.shape==='double')||(t.juntadaCon&&(Array.isArray(t.juntadaCon)?t.juntadaCon.length>0:!!t.juntadaCon));
       const elW=isDouble?CELL*2+24:CELL;
       const x=PAD+(t.gridX||0)*(CELL+20);
       const y=PAD+(t.gridY||0)*(CELL+20);
@@ -4346,13 +4346,15 @@ function openTableConfig(id){
   document.getElementById('tcfg-delete-btn').style.display='inline-block';
   const splitBtn=document.getElementById('tcfg-split-btn');
   if(splitBtn) splitBtn.style.display=(t.shape==='double')?'inline-block':'none';
-  // Si las sillas no tienen posiciones, generarlas
+  // Recalcular posiciones para mesa doble (viewBox cambió a 380px)
+  const isDouble=(t.shape==='double');
+  const CX_editor=isDouble?190:CFG_CX;
   editingChairs.forEach(function(c,i){
-    if(!c.pos){
-      const isDouble=(t.shape==='double');
-      const RX=isDouble?80:55, RY=50;
+    // Resetear siempre para mesa doble para asegurar posiciones correctas
+    if(!c.pos||isDouble){
+      const RX=isDouble?100:55, RY=50;
       const angle=(2*Math.PI*i/editingChairs.length)-(Math.PI/2);
-      c.pos={x:CFG_CX+RX*Math.cos(angle), y:CFG_CY+RY*Math.sin(angle)};
+      c.pos={x:CX_editor+RX*Math.cos(angle), y:CFG_CY+RY*Math.sin(angle)};
     }
   });
   _drawCfgEditor();
